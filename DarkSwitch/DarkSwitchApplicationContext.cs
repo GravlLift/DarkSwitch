@@ -32,26 +32,34 @@ namespace DarkSwitch
                 return;
             }
 
+            #region Register hotkey
             keyBoardManager = new KeyboardHookManager();
             keyBoardManager.Start();
             keyBoardManager.RegisterHotkey(ModifierKeys.WindowsKey, (int)Keys.OemQuestion, ToggleTheme);
+            #endregion
 
+            // Save icons
             lightIcon = Resources.LightIcon;
-            darkIcon = InvertIcon(lightIcon);
+            darkIcon = lightIcon.Invert();
+
             var systemUsesLightThemeValue = (int)Registry
                 .GetValue(registryKey, systemUsesLightTheme, 1) != 0;
 
             // Initialize Tray Icon
+            var contextMenu = new ContextMenuStrip();
+            var exit = contextMenu.Items.Add("Exit");
+            exit.Click += Exit;
             trayIcon = new NotifyIcon()
             {
                 Icon = systemUsesLightThemeValue ? lightIcon : darkIcon,
+                ContextMenuStrip = contextMenu,
                 Text = "DarkSwitch",
                 Visible = true,
             };
             trayIcon.MouseClick += new MouseEventHandler(this.Icon_MouseClick);
         }
 
-        public static bool AlreadyRunning()
+        private static bool AlreadyRunning()
         {
             try
             {
@@ -74,28 +82,12 @@ namespace DarkSwitch
             return false;
         }
 
-        private static Icon InvertIcon(Icon ico)
+        private void Icon_MouseClick(object _, MouseEventArgs e)
         {
-            var pic = new Bitmap(128,128);
-            using (Graphics g = Graphics.FromImage(pic))
-            {
-                g.DrawImage(ico.ToBitmap(), 0, 0, 128, 128);
+            if (e.Button == MouseButtons.Left) {
+                ToggleTheme();
             }
-
-            for (int y = 0; (y <= (pic.Height - 1)); y++)
-            {
-                for (int x = 0; (x <= (pic.Width - 1)); x++)
-                {
-                    Color inv = pic.GetPixel(x, y);
-                    inv = Color.FromArgb(inv.A, (255 - inv.R), (255 - inv.G), (255 - inv.B));
-                    pic.SetPixel(x, y, inv);
-                }
-            }
-            return Icon.FromHandle(pic.GetHicon());
         }
-
-        private void Icon_MouseClick(object _, MouseEventArgs __)
-            => ToggleTheme();
 
         private void ToggleTheme()
         {
@@ -104,6 +96,8 @@ namespace DarkSwitch
 
             Registry.SetValue(registryKey, appsUseLightThemeValue, Convert.ToInt32(!systemUsesLightThemeValue));
             Registry.SetValue(registryKey, systemUsesLightTheme, Convert.ToInt32(!systemUsesLightThemeValue));
+
+            trayIcon.Icon = !systemUsesLightThemeValue ? lightIcon : darkIcon;
         }
 
         void Exit(object sender, EventArgs e)
