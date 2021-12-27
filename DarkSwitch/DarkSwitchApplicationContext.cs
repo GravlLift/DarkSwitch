@@ -53,7 +53,7 @@ namespace DarkSwitch
             {
                 Icon = systemUsesLightThemeValue ? lightIcon : darkIcon,
                 ContextMenuStrip = contextMenu,
-                Text = "DarkSwitch",
+                Text = "DarkSwitch\n (Win + ?)",
                 Visible = true,
             };
             trayIcon.MouseClick += new MouseEventHandler(this.Icon_MouseClick);
